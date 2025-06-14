@@ -8,46 +8,15 @@ import { OrderCard, type Order } from "@/components/OrderCard";
 import type { NextPageWithLayout } from "../_app";
 import type { ReactElement } from "react";
 import { useState } from "react";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { OrderStatus } from "@prisma/client";
+import { api } from "@/utils/api";
 
 const SalesPage: NextPageWithLayout = () => {
-  const [orders, setOrders] = useState<Order[]>([
-    {
-      id: "ORD-001",
-      totalAmount: 45.99,
-      totalItems: 3,
-      status: "Processing"
-    },
-    {
-      id: "ORD-002",
-      totalAmount: 23.50,
-      totalItems: 2,
-      status: "Finished"
-    },
-    {
-      id: "ORD-003",
-      totalAmount: 67.25,
-      totalItems: 5,
-      status: "Processing"
-    },
-    {
-      id: "ORD-004",
-      totalAmount: 12.99,
-      totalItems: 1,
-      status: "Finished"
-    },
-    {
-      id: "ORD-005",
-      totalAmount: 89.75,
-      totalItems: 7,
-      status: "Processing"
-    },
-    {
-      id: "ORD-006",
-      totalAmount: 34.20,
-      totalItems: 4,
-      status: "Finished"
-    }
-  ]);
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  const [filterOrders, setFilterOrders] = useState<OrderStatus | "all">("all");
+
 
   const handleFinishOrder = (orderId: string) => {
     setOrders(prevOrders =>
@@ -58,6 +27,18 @@ const SalesPage: NextPageWithLayout = () => {
       )
     );
   };
+
+  const filterStatus = (value: OrderStatus | "all") => {
+    setFilterOrders(value);
+    if (value !== "all") {
+
+    }
+  }
+
+  const { data: getOrder } = api.order.getOrder.useQuery({
+    status: filterOrders
+  });
+
 
   return (
     <>
@@ -87,12 +68,33 @@ const SalesPage: NextPageWithLayout = () => {
 
       <div className="rounded-lg border p-6">
         <h3 className="text-lg font-medium mb-4">Orders</h3>
-        
+        <div className="mb-4 flex width-full justify-end">
+          <Select onValueChange={filterStatus}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="-- Status --" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem key="all" value="all">All</SelectItem>
+                {
+                  Object.keys(OrderStatus).map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))
+                }
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {orders.map((order) => (
+          {getOrder?.map((order) => (
             <OrderCard
               key={order.id}
-              order={order}
+              id={order.id}
+              totalAmount={order.grandTotal}
+              status={order.status}
+              totalItems={order._count.orderItems}
               onFinishOrder={handleFinishOrder}
             />
           ))}

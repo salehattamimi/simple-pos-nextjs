@@ -17,10 +17,10 @@ model Category {
     name         String
     productCount Int    @default(0)
 
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
-    
-    products   Product[]
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    products Product[]
 }
 
 model Product {
@@ -35,4 +35,43 @@ model Product {
     createadAt DateTime @default(now())
     updatedAt  DateTime @updatedAt
     categoryId String
+
+    orderItems OrderItem[]
+}
+
+model Order {
+    id String @id @default(uuid())
+
+    subTotal   Int
+    tax        Int
+    grandTotal Int
+
+    // payment gateway fields
+    externalTransactionId String?
+    paymentMethodId       String?
+    status                OrderStatus @default(AWAITING_PAYMENT)
+
+    paidAt    DateTime?
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+
+    orderItems OrderItem[]
+}
+
+enum OrderStatus {
+    AWAITING_PAYMENT
+    PROCESSING
+    DONE
+}
+
+model OrderItem {
+    id        String  @id @default(uuid())
+    productId String
+    product   Product @relation(fields: [productId], references: [id])
+
+    order Order @relation(fields: [orderId], references: [id])
+
+    price    Int
+    quantity Int
+    orderId  String
 }
